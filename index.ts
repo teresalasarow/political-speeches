@@ -1,6 +1,6 @@
 import { readCSVFile }  from "./csvFile";
 import express from "express";
-import fs from "fs";
+import fs, {exists} from "fs";
 
 const dotenv = require('dotenv'); // is used to read environment variables
 dotenv.config();
@@ -9,6 +9,11 @@ dotenv.config();
     const https = require('https');
     const http = require('http');
     const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+    const options = {
+        key: fs.readFileSync('certificates/private.key'),
+        cert: fs.readFileSync('certificates/certificate.crt'),
+        // ca: fs.readFileSync('certificates/ca_bundle.crt')
+    };
 
     const app = express();
 
@@ -59,12 +64,17 @@ dotenv.config();
 
     // A route handler for the default home page
     app.get( "/evaluation", async ( req, res ) => {
+        // let queryParams = req.query;
+        // console.log(queryParams);
+
         try {
-            const data = await readCSVFile();
+            let data = await readCSVFile();
             let jsonObject = {};
+
             data.forEach((value, key) => {
                 jsonObject[key] = value
             });
+
             res.setHeader('Content-Type', 'text/json');
             res.status(200).send(jsonObject);
         } catch (e) {
@@ -72,9 +82,13 @@ dotenv.config();
         }
     });
 
-    http.createServer(app).listen(8080);
-    // https.createServer(options, app).listen(PORT);
-
     // Server activation
+    // http.createServer(app).listen(PORT, () => {
+    //     console.log(`[server]: Server is running at http://${host}:${PORT}`);
+    // });
+    // https.createServer(options, app).listen(443, () => {
+    //     console.log(`[server]: Server is running at https://${host}:${PORT}`)
+    // });
+
     app.listen(PORT, () => console.log(`[server]: Server is running at http://${host}:${PORT}`));
 })();
